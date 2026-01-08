@@ -39,7 +39,7 @@ try{
 const accessToken = jwt.sign(
   payload,
   process.env.JWT_SECRET!,
-  { expiresIn: "5m" }
+  { expiresIn: "5s" }
 );
 
 // Refresh token (long-lived)
@@ -110,11 +110,17 @@ export const register = async(req:Request , res: Response) : Promise<any> => {
 }
 
 export const logout = async (req: Request, res: Response) => {
+  console.log('🚪 Logout request received');
+  
+  // Clear the refresh token cookie
   res.clearCookie("refreshToken", {
     httpOnly: true,
-    sameSite: "strict",
-    secure: process.env.NODE_ENV === "production",
+    secure: false,
+    sameSite: "lax",
+    path: "/"
   });
 
-  return res.status(200).json({ message: "Logged out successfully" });
+  return res.status(200).json({ 
+    message: "Logged out successfully" 
+  });
 };

@@ -13,11 +13,6 @@ export interface Note {
   createdAt: string;
 }
 
-async function fetchPost(): Promise<Note[]> {
-  const response = await api.get("/api/notesRoutes/getNotes");
-  return response.data;
-}
-
   const handleLogout = async () => {
     const router = useRouter();
     try {
@@ -34,7 +29,6 @@ export default function NotesPage() {
 
   const fetchNotes = async () => {
     try {
-      console.log(process.env.NEXT_PUBLIC_HOST);
       const res = await api.get("/api/notesRoutes/getNotes");
       setNotes(res.data);
     } catch (err) {

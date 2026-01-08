@@ -1,71 +1,48 @@
-// lib/axios.ts
-import axios from 'axios';
-
+// lib/axiosInstance.ts
+import axios from "axios";
+import { getToken , setToken, clearToken } from "./authStore";
 const api = axios.create({
   baseURL: process.env.NEXT_PUBLIC_HOST,
-  headers: {
-    'Content-Type': 'application/json',
-  },
-  withCredentials: true, // Important for cookies
+  withCredentials: true, // sends refresh token cookie
 });
-console.log(process.env.NEXT_PUBLIC_HOST);
 
-
-// Request interceptor - adds access token to every request
-api.interceptors.request.use(
-  (config) => {
-    const accessToken = localStorage.getItem('accessToken');
-    if (accessToken) {
-      config.headers.Authorization = `Bearer ${accessToken}`;
-    }
-    return config;
-  },
-  (error) => {
-    return Promise.reject(error);
+// Attach access token
+api.interceptors.request.use((config) => {
+  const token = getToken();
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
   }
-);
+  return config;
+});
 
-// Response interceptor - handles token refresh
+// Refresh logic
 api.interceptors.response.use(
-  (response) => {
-    return response;
-  },
-  async (error) => {
-    const originalRequest = error.config;
+  (res) => res,
+  async (err) => {
+    const original = err.config;
 
-    // If error is 401 and we haven't retried yet
-    if (error.response?.status === 401 && !originalRequest._retry) {
-      originalRequest._retry = true;
+    if (err.response?.status === 401 && !original._retry) {
+      original._retry = true;
 
       try {
-        // Call refresh endpoint (uses httpOnly cookie automatically)
-        const response = await axios.post(
+        const { data } = await axios.post(
           `${process.env.NEXT_PUBLIC_HOST}/api/auth/refreshToken`,
           {},
           { withCredentials: true }
         );
 
-        const { accessToken } = response.data;
+        setToken(data.accessToken);
+        original.headers.Authorization = `Bearer ${data.accessToken}`;
 
-        // Store new access token
-        localStorage.setItem('accessToken', accessToken);
-
-        // Update the failed request with new token
-        originalRequest.headers.Authorization = `Bearer ${accessToken}`;
-
-        // Retry the original request
-        return api(originalRequest);
-      } catch (refreshError) {
-        // Refresh failed - clear tokens and redirect to login
-        localStorage.removeItem('accessToken');
-        window.location.href = '/auth/login';
-        return Promise.reject(refreshError);
+        return api(original);
+      } catch {
+        clearToken();
+        window.location.href = "/auth/login";
       }
     }
 
-    return Promise.reject(error);
+    return Promise.reject(err);
   }
 );
 
 export default api;
-

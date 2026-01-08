@@ -3,7 +3,7 @@
 import { useState } from "react";
 import publicApi from "@/utils/publicApi";
 import { useRouter } from "next/navigation";
-
+import {   setToken   } from "@/utils/authStore";
 export default function Login() {
   const router = useRouter();
 
@@ -24,16 +24,18 @@ export default function Login() {
 
       if (!accessToken) throw new Error("No access token returned");
 
-
-      localStorage.setItem("accessToken", accessToken);
+      // Store token in memory instead of localStorage
+      setToken(accessToken);
+      
       setMessage(message ?? "Login successful");
-      if(res.status == 200){
-        setTimeout(()=>{
-          router.push("/notes")
-        })
+      
+      if (res.status === 200) {
+        setTimeout(() => {
+          router.push("/notes");
+        }, 500);
       }
     } catch (err: any) {
-      setMessage(err.response?.data?.message );
+      setMessage(err.response?.data?.message);
     }
   };
 
@@ -51,10 +53,9 @@ export default function Login() {
             value={userEmail}
             onChange={(e) => setUserEmail(e.target.value)}
             required
-           className="w-full rounded-lg border border-zinc-300 px-4 py-2 
-text-zinc-900 placeholder-zinc-400 
-focus:outline-none focus:ring-2 focus:ring-black bg-white"
-
+            className="w-full rounded-lg border border-zinc-300 px-4 py-2 
+              text-zinc-900 placeholder-zinc-400 
+              focus:outline-none focus:ring-2 focus:ring-black bg-white"
           />
 
           <input
@@ -63,10 +64,9 @@ focus:outline-none focus:ring-2 focus:ring-black bg-white"
             value={userPassword}
             onChange={(e) => setUserPassword(e.target.value)}
             required
-          className="w-full rounded-lg border border-zinc-300 px-4 py-2 
-text-zinc-900 placeholder-zinc-400 
-focus:outline-none focus:ring-2 focus:ring-black bg-white"
-
+            className="w-full rounded-lg border border-zinc-300 px-4 py-2 
+              text-zinc-900 placeholder-zinc-400 
+              focus:outline-none focus:ring-2 focus:ring-black bg-white"
           />
 
           <button
